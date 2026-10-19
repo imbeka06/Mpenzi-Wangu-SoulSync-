@@ -56,3 +56,4 @@ $RECYCLE.BIN/
 logs
 *.log
 coverage/
+AGENTS.md
