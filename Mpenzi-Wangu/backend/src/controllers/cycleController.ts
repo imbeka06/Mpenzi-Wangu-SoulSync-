@@ -5,7 +5,14 @@ export const updateCycle = async (req: Request, res: Response): Promise<void> =>
   try {
     const { coupleCode, userId, lastPeriodDate, cycleLength, periodLength, currentPhase, symptoms, empathyTip } = req.body;
 
-    const cycleRef = db.collection('couples').doc(coupleCode.toUpperCase()).collection('cycleLogs').doc('current');
+    const code = Array.isArray(coupleCode) ? coupleCode[0] : coupleCode;
+
+    if (!code) {
+      res.status(400).json({ success: false, message: 'Couple code is required' });
+      return;
+    }
+
+    const cycleRef = db.collection('couples').doc(code.toUpperCase()).collection('cycleLogs').doc('current');
     
     await cycleRef.set({
       userId,
@@ -27,7 +34,15 @@ export const updateCycle = async (req: Request, res: Response): Promise<void> =>
 export const getCycle = async (req: Request, res: Response): Promise<void> => {
   try {
     const { coupleCode } = req.params;
-    const cycleRef = db.collection('couples').doc(coupleCode.toUpperCase()).collection('cycleLogs').doc('current');
+    
+    const code = Array.isArray(coupleCode) ? coupleCode[0] : coupleCode;
+
+    if (!code) {
+      res.status(400).json({ success: false, message: 'Couple code is required' });
+      return;
+    }
+
+    const cycleRef = db.collection('couples').doc(code.toUpperCase()).collection('cycleLogs').doc('current');
     const doc = await cycleRef.get();
 
     if (!doc.exists) {
