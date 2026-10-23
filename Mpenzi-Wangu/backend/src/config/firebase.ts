@@ -1,20 +1,21 @@
-import admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import path from 'path';
 
-// Path to your service account key file
 const serviceAccountPath = path.join(__dirname, 'firebase-service-account.json');
 
-if (!admin.apps.length) {
+if (!getApps().length) {
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccountPath),
+    initializeApp({
+      credential: cert(serviceAccountPath),
     });
     console.log(' Firebase Admin SDK initialized successfully');
   } catch (error) {
-    console.warn(' Service account key missing. Falling back to default credentials.');
-    admin.initializeApp();
+    console.warn(' Service account key missing or invalid. Falling back to default credentials.');
+    initializeApp();
   }
 }
 
-export const db = admin.firestore();
-export const auth = admin.auth();
+export const db = getFirestore();
+export const auth = getAuth();
