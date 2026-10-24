@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { PenTool, Music, Play, Pause, Save, Send, Heart } from 'lucide-react-native';
+import { useTheme } from '../context/ThemeContext';
 
 const MUSIC_OPTIONS = [
   { id: '1', title: 'Acoustic Love Melody 🎸' },
@@ -17,26 +10,20 @@ const MUSIC_OPTIONS = [
 ];
 
 export default function SweetNotesScreen() {
+  const { colors } = useTheme();
   const [mode, setMode] = useState<'view' | 'create'>('view');
   const [noteTitle, setNoteTitle] = useState('');
   const [noteBody, setNoteBody] = useState('');
   const [selectedTrack, setSelectedTrack] = useState(MUSIC_OPTIONS[0]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [draft, setDraft] = useState<{ title: string; body: string } | null>(null);
 
-  // Active Note Received from Partner
   const [receivedNote] = useState({
     author: 'Your Love 💕',
     title: 'Thinking of You Today',
-    body: 'I woke up missing your smile! Just wanted to leave you this sweet note to remind you how much you mean to me. Play the music attached and enjoy your day! 🌸',
+    body: 'I woke up missing your smile! Just wanted to leave you this sweet note. Play the attached track and enjoy your day! 🌸',
     track: 'Acoustic Love Melody 🎸',
     createdAt: 'Today at 8:30 AM',
   });
-
-  const handleSaveDraft = () => {
-    setDraft({ title: noteTitle, body: noteBody });
-    Alert.alert('Draft Saved 📝', 'Your note draft has been saved locally!');
-  };
 
   const handlePostNote = () => {
     if (!noteTitle || !noteBody) {
@@ -50,68 +37,61 @@ export default function SweetNotesScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Top Toggle Header */}
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
       <View style={styles.toggleRow}>
         <TouchableOpacity
-          style={[styles.toggleBtn, mode === 'view' && styles.activeToggleBtn]}
+          style={[styles.toggleBtn, { backgroundColor: mode === 'view' ? colors.primary : colors.cardBg, borderColor: mode === 'view' ? colors.primary : colors.border }]}
           onPress={() => setMode('view')}
         >
-          <Heart color={mode === 'view' ? '#FFF' : '#FF6B8B'} size={18} />
-          <Text style={[styles.toggleText, mode === 'view' && styles.activeToggleText]}>
+          <Heart color={mode === 'view' ? '#FFF' : colors.primary} size={18} />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: mode === 'view' ? '#FFF' : colors.primary }}>
             Read Mpenzi's Note
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.toggleBtn, mode === 'create' && styles.activeToggleBtn]}
+          style={[styles.toggleBtn, { backgroundColor: mode === 'create' ? colors.primary : colors.cardBg, borderColor: mode === 'create' ? colors.primary : colors.border }]}
           onPress={() => setMode('create')}
         >
-          <PenTool color={mode === 'create' ? '#FFF' : '#FF6B8B'} size={18} />
-          <Text style={[styles.toggleText, mode === 'create' && styles.activeToggleText]}>
+          <PenTool color={mode === 'create' ? '#FFF' : colors.primary} size={18} />
+          <Text style={{ fontSize: 13, fontWeight: '700', color: mode === 'create' ? '#FFF' : colors.primary }}>
             Create Note
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* MODE 1: READ RECEIVED NOTE WITH MUSIC PLAYER */}
       {mode === 'view' ? (
-        <View style={styles.noteCard}>
-          <Text style={styles.noteHeaderTag}>Letter from {receivedNote.author}</Text>
-          <Text style={styles.noteTitle}>{receivedNote.title}</Text>
-          <Text style={styles.noteDate}>{receivedNote.createdAt}</Text>
-          <Text style={styles.noteBody}>{receivedNote.body}</Text>
+        <View style={[styles.noteCard, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+          <Text style={[styles.noteHeaderTag, { color: colors.headerText }]}>Letter from {receivedNote.author}</Text>
+          <Text style={[styles.noteTitle, { color: colors.inputText }]}>{receivedNote.title}</Text>
+          <Text style={[styles.noteDate, { color: colors.subText }]}>{receivedNote.createdAt}</Text>
+          <Text style={[styles.noteBody, { color: colors.inputText }]}>{receivedNote.body}</Text>
 
-          {/* Attached Music Player Widget */}
-          <View style={styles.audioPlayerCard}>
+          <View style={[styles.audioPlayerCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.audioLabel}>Tagged Music Track:</Text>
-              <Text style={styles.audioTrackName}>{receivedNote.track}</Text>
+              <Text style={[styles.audioLabel, { color: colors.subText }]}>Tagged Music Track:</Text>
+              <Text style={[styles.audioTrackName, { color: colors.headerText }]}>{receivedNote.track}</Text>
             </View>
-            <TouchableOpacity
-              style={styles.playButton}
-              onPress={() => setIsPlaying(!isPlaying)}
-            >
+            <TouchableOpacity style={[styles.playButton, { backgroundColor: colors.primary }]} onPress={() => setIsPlaying(!isPlaying)}>
               {isPlaying ? <Pause color="#FFF" size={20} /> : <Play color="#FFF" size={20} />}
             </TouchableOpacity>
           </View>
         </View>
       ) : (
-        /* MODE 2: CREATE NOTE & ATTACH MUSIC */
-        <View style={styles.createCard}>
-          <Text style={styles.createHeading}>Write a Sweet Notepad Note 💌</Text>
+        <View style={[styles.createCard, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+          <Text style={[styles.createHeading, { color: colors.headerText }]}>Write a Sweet Note 💌</Text>
 
           <TextInput
-            style={styles.inputTitle}
-            placeholder="Note Title (e.g., My Dearest...)"
+            style={[styles.inputTitle, { backgroundColor: colors.background, borderColor: colors.border, color: colors.inputText }]}
+            placeholder="Note Title"
             placeholderTextColor="#A0AEC0"
             value={noteTitle}
             onChangeText={setNoteTitle}
           />
 
           <TextInput
-            style={styles.inputBody}
-            placeholder="Write your heartfelt note here..."
+            style={[styles.inputBody, { backgroundColor: colors.background, borderColor: colors.border, color: colors.inputText }]}
+            placeholder="Write your heartfelt note..."
             placeholderTextColor="#A0AEC0"
             multiline
             numberOfLines={6}
@@ -120,41 +100,27 @@ export default function SweetNotesScreen() {
             onChangeText={setNoteBody}
           />
 
-          {/* Attach Music Track */}
-          <Text style={styles.musicSelectLabel}>Tag a Music Track to Play Along:</Text>
+          <Text style={[styles.musicSelectLabel, { color: colors.inputText }]}>Tag Music Track:</Text>
           {MUSIC_OPTIONS.map((track) => (
             <TouchableOpacity
               key={track.id}
               style={[
                 styles.trackChip,
-                selectedTrack.id === track.id && styles.selectedTrackChip,
+                { backgroundColor: selectedTrack.id === track.id ? colors.background : colors.cardBg, borderColor: selectedTrack.id === track.id ? colors.primary : colors.border },
               ]}
               onPress={() => setSelectedTrack(track)}
             >
-              <Music color={selectedTrack.id === track.id ? '#D81B60' : '#A0AEC0'} size={18} />
-              <Text
-                style={[
-                  styles.trackChipText,
-                  selectedTrack.id === track.id && styles.selectedTrackText,
-                ]}
-              >
+              <Music color={selectedTrack.id === track.id ? colors.primary : colors.subText} size={18} />
+              <Text style={{ fontSize: 13, fontWeight: selectedTrack.id === track.id ? '700' : '600', color: selectedTrack.id === track.id ? colors.headerText : colors.subText }}>
                 {track.title}
               </Text>
             </TouchableOpacity>
           ))}
 
-          {/* Action Buttons */}
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.draftBtn} onPress={handleSaveDraft}>
-              <Save color="#718096" size={18} />
-              <Text style={styles.draftBtnText}>Save Draft</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.postBtn} onPress={handlePostNote}>
-              <Send color="#FFF" size={18} />
-              <Text style={styles.postBtnText}>Post to Partner</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={[styles.postBtn, { backgroundColor: colors.primary }]} onPress={handlePostNote}>
+            <Send color="#FFF" size={18} />
+            <Text style={styles.postBtnText}>Post to Partner</Text>
+          </TouchableOpacity>
         </View>
       )}
     </ScrollView>
@@ -162,64 +128,25 @@ export default function SweetNotesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF5F7' },
+  container: { flex: 1 },
   content: { padding: 20 },
   toggleRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  toggleBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 16,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#FFD1DC',
-    gap: 8,
-  },
-  activeToggleBtn: { backgroundColor: '#FF6B8B', borderColor: '#FF6B8B' },
-  toggleText: { fontSize: 13, fontWeight: '700', color: '#FF6B8B' },
-  activeToggleText: { color: '#FFF' },
-
-  // Read Note Card
-  noteCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#FFD1DC',
-    elevation: 3,
-  },
-  noteHeaderTag: { fontSize: 12, fontWeight: '800', color: '#D81B60', textTransform: 'uppercase' },
-  noteTitle: { fontSize: 22, fontWeight: '800', color: '#2D3748', marginTop: 6 },
-  noteDate: { fontSize: 12, color: '#A0AEC0', marginTop: 2, marginBottom: 15 },
-  noteBody: { fontSize: 15, color: '#4A5568', lineHeight: 22, marginBottom: 20 },
-  audioPlayerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF5F7',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#FFD1DC',
-  },
-  audioLabel: { fontSize: 11, color: '#718096', fontWeight: '600' },
-  audioTrackName: { fontSize: 14, fontWeight: '700', color: '#D81B60', marginTop: 2 },
-  playButton: { backgroundColor: '#FF6B8B', padding: 12, borderRadius: 25 },
-
-  // Create Note Form
-  createCard: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#FFD1DC' },
-  createHeading: { fontSize: 18, fontWeight: '800', color: '#D81B60', marginBottom: 15 },
-  inputTitle: { backgroundColor: '#FFF5F7', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#FFD1DC', fontSize: 15, marginBottom: 12, color: '#2D3748' },
-  inputBody: { backgroundColor: '#FFF5F7', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#FFD1DC', fontSize: 15, height: 120, marginBottom: 15, color: '#2D3748' },
-  musicSelectLabel: { fontSize: 13, fontWeight: '700', color: '#4A5568', marginBottom: 10 },
-  trackChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF5F7', padding: 12, borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: '#FFD1DC', gap: 10 },
-  selectedTrackChip: { backgroundColor: '#FFE4E8', borderColor: '#D81B60' },
-  trackChipText: { fontSize: 13, color: '#4A5568', fontWeight: '600' },
-  selectedTrackText: { color: '#D81B60', fontWeight: '700' },
-  actionRow: { flexDirection: 'row', gap: 10, marginTop: 15 },
-  draftBtn: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', backgroundColor: '#EDF2F7', padding: 14, borderRadius: 12, gap: 6 },
-  draftBtnText: { color: '#4A5568', fontWeight: '700', fontSize: 14 },
-  postBtn: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', backgroundColor: '#FF6B8B', padding: 14, borderRadius: 12, gap: 6 },
+  toggleBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 16, borderWidth: 1, gap: 8 },
+  noteCard: { borderRadius: 24, padding: 24, borderWidth: 1 },
+  noteHeaderTag: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
+  noteTitle: { fontSize: 22, fontWeight: '800', marginTop: 6 },
+  noteDate: { fontSize: 12, marginTop: 2, marginBottom: 15 },
+  noteBody: { fontSize: 15, lineHeight: 22, marginBottom: 20 },
+  audioPlayerCard: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 1 },
+  audioLabel: { fontSize: 11, fontWeight: '600' },
+  audioTrackName: { fontSize: 14, fontWeight: '700', marginTop: 2 },
+  playButton: { padding: 12, borderRadius: 25 },
+  createCard: { borderRadius: 24, padding: 20, borderWidth: 1 },
+  createHeading: { fontSize: 18, fontWeight: '800', marginBottom: 15 },
+  inputTitle: { borderRadius: 12, padding: 14, borderWidth: 1, fontSize: 15, marginBottom: 12 },
+  inputBody: { borderRadius: 12, padding: 14, borderWidth: 1, fontSize: 15, height: 120, marginBottom: 15 },
+  musicSelectLabel: { fontSize: 13, fontWeight: '700', marginBottom: 10 },
+  trackChip: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8, borderWidth: 1, gap: 10 },
+  postBtn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 14, borderRadius: 12, gap: 6, marginTop: 15 },
   postBtnText: { color: '#FFF', fontWeight: '800', fontSize: 14 },
 });

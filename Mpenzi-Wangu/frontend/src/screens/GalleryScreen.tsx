@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { Image as ImageIcon, Video, Grid, Plus, Heart } from 'lucide-react-native';
+import { useTheme } from '../context/ThemeContext';
 
 export default function GalleryScreen() {
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<'photos' | 'videos' | 'collages'>('photos');
 
   const photos = [
@@ -23,55 +17,51 @@ export default function GalleryScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header Banner */}
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>Our Memory Gallery 🖼️</Text>
-        <Text style={styles.subtitle}>Sweet photos, videos, & collages shared together</Text>
+        <Text style={[styles.title, { color: colors.headerText }]}>Our Memory Gallery 🖼️</Text>
+        <Text style={[styles.subtitle, { color: colors.subText }]}>Sweet photos, videos, & collages shared together</Text>
       </View>
 
-      {/* Category Tabs */}
       <View style={styles.tabRow}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'photos' && styles.activeTab]}
+          style={[styles.tab, { backgroundColor: activeTab === 'photos' ? colors.primary : colors.cardBg, borderColor: activeTab === 'photos' ? colors.primary : colors.border }]}
           onPress={() => setActiveTab('photos')}
         >
-          <ImageIcon color={activeTab === 'photos' ? '#FFF' : '#FF6B8B'} size={18} />
-          <Text style={[styles.tabText, activeTab === 'photos' && styles.activeTabText]}>Photos</Text>
+          <ImageIcon color={activeTab === 'photos' ? '#FFF' : colors.primary} size={18} />
+          <Text style={{ fontSize: 12, fontWeight: '700', color: activeTab === 'photos' ? '#FFF' : colors.primary }}>Photos</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'videos' && styles.activeTab]}
+          style={[styles.tab, { backgroundColor: activeTab === 'videos' ? colors.primary : colors.cardBg, borderColor: activeTab === 'videos' ? colors.primary : colors.border }]}
           onPress={() => setActiveTab('videos')}
         >
-          <Video color={activeTab === 'videos' ? '#FFF' : '#FF6B8B'} size={18} />
-          <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>Videos</Text>
+          <Video color={activeTab === 'videos' ? '#FFF' : colors.primary} size={18} />
+          <Text style={{ fontSize: 12, fontWeight: '700', color: activeTab === 'videos' ? '#FFF' : colors.primary }}>Videos</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'collages' && styles.activeTab]}
+          style={[styles.tab, { backgroundColor: activeTab === 'collages' ? colors.primary : colors.cardBg, borderColor: activeTab === 'collages' ? colors.primary : colors.border }]}
           onPress={() => setActiveTab('collages')}
         >
-          <Grid color={activeTab === 'collages' ? '#FFF' : '#FF6B8B'} size={18} />
-          <Text style={[styles.tabText, activeTab === 'collages' && styles.activeTabText]}>Collages</Text>
+          <Grid color={activeTab === 'collages' ? '#FFF' : colors.primary} size={18} />
+          <Text style={{ fontSize: 12, fontWeight: '700', color: activeTab === 'collages' ? '#FFF' : colors.primary }}>Collages</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Gallery Grid */}
       <View style={styles.grid}>
         {photos.map((item) => (
-          <View key={item.id} style={styles.card}>
+          <View key={item.id} style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
             <Image source={{ uri: item.url }} style={styles.image} />
             <View style={styles.cardFooter}>
-              <Heart color="#FF6B8B" size={14} fill="#FF6B8B" />
-              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Heart color={colors.primary} size={14} fill={colors.primary} />
+              <Text style={[styles.cardTitle, { color: colors.inputText }]}>{item.title}</Text>
             </View>
           </View>
         ))}
       </View>
 
-      {/* Upload Memory Button */}
-      <TouchableOpacity style={styles.uploadBtn} onPress={handleUpload}>
+      <TouchableOpacity style={[styles.uploadBtn, { backgroundColor: colors.primary }]} onPress={handleUpload}>
         <Plus color="#FFF" size={20} />
         <Text style={styles.uploadBtnText}>Add Sweet Memory</Text>
       </TouchableOpacity>
@@ -80,21 +70,18 @@ export default function GalleryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF5F7' },
+  container: { flex: 1 },
   content: { padding: 20 },
   header: { marginBottom: 20 },
-  title: { fontSize: 24, fontWeight: '800', color: '#D81B60' },
-  subtitle: { fontSize: 13, color: '#718096', marginTop: 4 },
+  title: { fontSize: 24, fontWeight: '800' },
+  subtitle: { fontSize: 13, marginTop: 4 },
   tabRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 14, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#FFD1DC', gap: 6 },
-  activeTab: { backgroundColor: '#FF6B8B', borderColor: '#FF6B8B' },
-  tabText: { fontSize: 12, fontWeight: '700', color: '#FF6B8B' },
-  activeTabText: { color: '#FFF' },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 14, borderWidth: 1, gap: 6 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  card: { width: '48%', backgroundColor: '#FFF', borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: '#FFD1DC' },
+  card: { width: '48%', borderRadius: 18, overflow: 'hidden', borderWidth: 1 },
   image: { width: '100%', height: 130 },
   cardFooter: { flexDirection: 'row', alignItems: 'center', padding: 10, gap: 6 },
-  cardTitle: { fontSize: 11, fontWeight: '700', color: '#2D3748' },
-  uploadBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FF6B8B', padding: 16, borderRadius: 16, marginTop: 25, gap: 8 },
+  cardTitle: { fontSize: 11, fontWeight: '700' },
+  uploadBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 16, marginTop: 25, gap: 8 },
   uploadBtnText: { color: '#FFF', fontWeight: '800', fontSize: 15 },
 });

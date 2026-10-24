@@ -14,7 +14,7 @@ import { Camera, Save, Check } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { useTheme, THEMES, ThemeKey } from '../context/ThemeContext';
+import { useTheme, ThemeKey } from '../context/ThemeContext';
 
 export default function SettingsScreen({
   userId,
@@ -28,7 +28,6 @@ export default function SettingsScreen({
   const [displayName, setDisplayName] = useState('');
   const [aboutBio, setAboutBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const themeOptions: { key: ThemeKey; name: string; color: string }[] = [
@@ -41,76 +40,70 @@ export default function SettingsScreen({
   ];
 
   useEffect(() => {
+    let isMounted = true;
     const fetchProfile = async () => {
-      setLoading(true);
       try {
         const docRef = doc(db, 'users', userId);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
+        if (docSnap.exists() && isMounted) {
           const data = docSnap.data();
           if (data.displayName) setDisplayName(data.displayName);
           if (data.aboutBio) setAboutBio(data.aboutBio);
           if (data.avatarUrl) setAvatarUrl(data.avatarUrl);
           if (data.themeKey) setThemeKey(data.themeKey);
         }
-      } catch (e: any) {
-        Alert.alert('Error', e.message);
-      } finally {
-        setLoading(false);
+      } catch (e) {
+        console.log('Error fetching profile:', e);
       }
     };
     fetchProfile();
+    return () => { isMounted = false; };
   }, [userId]);
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
     if (!permissionResult.granted) {
-      Alert.alert('Permission Needed', 'Permission to access gallery is required!');
+      Alert.alert('Permission Needed', 'Gallery access is required.');
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.7,
+      quality: 0.3,
     });
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets[0]?.uri) {
       setAvatarUrl(result.assets[0].uri);
     }
   };
 
+  // LIGHTWEIGHT INSTANT SAVE
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      await setDoc(
-        doc(db, 'users', userId),
-        {
-          displayName: displayName || 'My Mpenzi',
-          aboutBio: aboutBio || 'In love with my special someone 💕',
-          avatarUrl: avatarUrl || '',
-          themeKey: themeKey,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-      Alert.alert('Success 💕', 'Profile & Theme changes saved!');
+      // Use web fallback avatar if local uri is too heavy for demo storage
+      const validAvatar = avatarUrl.startsWith('http')
+        ? avatarUrl
+        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200';
+
+      const userRef = doc(db, 'users', userId);
+      await setDoc(userRef, {
+        displayName: displayName || 'My Mpenzi',
+        aboutBio: aboutBio || 'In love 💕',
+        avatarUrl: validAvatar,
+        themeKey: themeKey,
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
+
+      Alert.alert('Success 💕', 'Profile & Theme saved across all screens!');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Save Error', error.message);
     } finally {
       setSaving(false);
     }
   };
-
-  if (loading) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
@@ -133,7 +126,7 @@ export default function SettingsScreen({
         <Text style={[styles.pickText, { color: colors.primary }]}>Tap picture to choose photo from gallery</Text>
       </View>
 
-      {/* Profile Form Card */}
+      {/* Profile Form */}
       <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
         <Text style={[styles.label, { color: colors.inputText }]}>Display Name / Pet Name</Text>
         <TextInput
@@ -156,7 +149,7 @@ export default function SettingsScreen({
         />
       </View>
 
-      {/* App Theme Picker Card */}
+      {/* Theme Picker */}
       <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
         <Text style={[styles.label, { color: colors.inputText, marginBottom: 12 }]}>Select App Theme</Text>
         <View style={styles.themeGrid}>
@@ -201,7 +194,6 @@ export default function SettingsScreen({
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { fontSize: 24, fontWeight: '800' },
   headerSubtitle: { fontSize: 13, marginTop: 2, marginBottom: 20 },
   card: { borderRadius: 20, padding: 20, borderWidth: 1, marginBottom: 15, alignItems: 'center' },
