@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Home, MessageCircle, Calendar, Music, AlertCircle } from 'lucide-react-native';
+import { Home, MessageCircle, Calendar, Music, AlertCircle, PenTool, Image as ImageIcon } from 'lucide-react-native';
 
 import AuthScreen from './src/screens/AuthScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -9,10 +9,12 @@ import ChatScreen from './src/screens/ChatScreen';
 import CycleScreen from './src/screens/CycleScreen';
 import MusicScreen from './src/screens/MusicScreen';
 import SosScreen from './src/screens/SosScreen';
+import SweetNotesScreen from './src/screens/SweetNotesScreen';
+import GalleryScreen from './src/screens/GalleryScreen';
 
 export default function App() {
   const [session, setSession] = useState<{ userId: string; coupleId: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'chat' | 'cycle' | 'music' | 'sos'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'chat' | 'cycle' | 'sweetNotes' | 'gallery' | 'music' | 'sos'>('home');
 
   if (!session) {
     return <AuthScreen onLoginSuccess={(userId, coupleId) => setSession({ userId, coupleId })} />;
@@ -26,6 +28,10 @@ export default function App() {
         return <ChatScreen coupleId={session.coupleId} userId={session.userId} />;
       case 'cycle':
         return <CycleScreen coupleId={session.coupleId} />;
+      case 'sweetNotes':
+        return <SweetNotesScreen />;
+      case 'gallery':
+        return <GalleryScreen />;
       case 'music':
         return <MusicScreen />;
       case 'sos':
@@ -39,44 +45,44 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Top Header */}
+      {/* Top Header Bar */}
       <View style={styles.header}>
-        <View>
+        <TouchableOpacity onPress={() => setActiveTab('home')}>
           <Text style={styles.appName}>Mpenzi-Wangu 💕</Text>
           <Text style={styles.coupleTag}>Space: {session.coupleId}</Text>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => setSession(null)} style={styles.logoutBtn}>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Main Content Area */}
+      {/* Screen Body */}
       <View style={{ flex: 1 }}>{renderScreen()}</View>
 
-      {/* Bottom Navigation Bar */}
+      {/* Bottom Navigation */}
       <View style={styles.tabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('home')}>
-          <Home color={activeTab === 'home' ? '#FF6B8B' : '#A0AEC0'} size={22} />
+          <Home color={activeTab === 'home' ? '#FF6B8B' : '#A0AEC0'} size={20} />
           <Text style={[styles.tabLabel, activeTab === 'home' && styles.activeTabLabel]}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('chat')}>
-          <MessageCircle color={activeTab === 'chat' ? '#FF6B8B' : '#A0AEC0'} size={22} />
-          <Text style={[styles.tabLabel, activeTab === 'chat' && styles.activeTabLabel]}>Chat</Text>
+          <MessageCircle color={activeTab === 'chat' ? '#FF6B8B' : '#A0AEC0'} size={20} />
+          <Text style={[styles.tabLabel, activeTab === 'chat' && styles.activeTabLabel]}>Talk</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('cycle')}>
-          <Calendar color={activeTab === 'cycle' ? '#FF6B8B' : '#A0AEC0'} size={22} />
-          <Text style={[styles.tabLabel, activeTab === 'cycle' && styles.activeTabLabel]}>Mwezi</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('sweetNotes')}>
+          <PenTool color={activeTab === 'sweetNotes' ? '#FF6B8B' : '#A0AEC0'} size={20} />
+          <Text style={[styles.tabLabel, activeTab === 'sweetNotes' && styles.activeTabLabel]}>Notes</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('music')}>
-          <Music color={activeTab === 'music' ? '#FF6B8B' : '#A0AEC0'} size={22} />
-          <Text style={[styles.tabLabel, activeTab === 'music' && styles.activeTabLabel]}>Music</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('gallery')}>
+          <ImageIcon color={activeTab === 'gallery' ? '#FF6B8B' : '#A0AEC0'} size={20} />
+          <Text style={[styles.tabLabel, activeTab === 'gallery' && styles.activeTabLabel]}>Gallery</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('sos')}>
-          <AlertCircle color={activeTab === 'sos' ? '#E53E3E' : '#A0AEC0'} size={22} />
+          <AlertCircle color={activeTab === 'sos' ? '#E53E3E' : '#A0AEC0'} size={20} />
           <Text style={[styles.tabLabel, activeTab === 'sos' && { color: '#E53E3E', fontWeight: '700' }]}>SOS</Text>
         </TouchableOpacity>
       </View>
@@ -103,12 +109,12 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 10,
+    paddingVertical: 8,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#FFD1DC',
   },
   tabItem: { alignItems: 'center' },
-  tabLabel: { fontSize: 11, color: '#A0AEC0', marginTop: 4, fontWeight: '600' },
+  tabLabel: { fontSize: 10, color: '#A0AEC0', marginTop: 2, fontWeight: '600' },
   activeTabLabel: { color: '#FF6B8B', fontWeight: '700' }
 });
