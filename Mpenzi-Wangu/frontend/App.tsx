@@ -3,6 +3,7 @@ import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-na
 import { StatusBar } from 'expo-status-bar';
 import { Home, MessageCircle, Calendar, Music, AlertCircle, PenTool, Image as ImageIcon, Settings } from 'lucide-react-native';
 
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import AuthScreen from './src/screens/AuthScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ChatScreen from './src/screens/ChatScreen';
@@ -13,7 +14,8 @@ import SweetNotesScreen from './src/screens/SweetNotesScreen';
 import GalleryScreen from './src/screens/GalleryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 
-export default function App() {
+function MainApp() {
+  const { colors } = useTheme();
   const [session, setSession] = useState<{ userId: string; coupleId: string } | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'chat' | 'cycle' | 'sweetNotes' | 'gallery' | 'music' | 'sos' | 'settings'>('home');
 
@@ -45,85 +47,75 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style="auto" />
       
-      {/* Top Header Bar */}
-      <View style={styles.header}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
         <TouchableOpacity onPress={() => setActiveTab('home')}>
-          <Text style={styles.appName}>Mpenzi-Wangu 💕</Text>
-          <Text style={styles.coupleTag}>Space: {session.coupleId}</Text>
+          <Text style={[styles.appName, { color: colors.headerText }]}>Mpenzi-Wangu 💕</Text>
+          <Text style={[styles.coupleTag, { color: colors.subText }]}>Space: {session.coupleId}</Text>
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => setActiveTab('settings')} style={styles.gearIconBtn}>
-            <Settings color="#D81B60" size={18} />
+          <TouchableOpacity onPress={() => setActiveTab('settings')} style={[styles.gearIconBtn, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <Settings color={colors.primary} size={18} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setSession(null)} style={styles.logoutBtn}>
-            <Text style={styles.logoutText}>Log Out</Text>
+          <TouchableOpacity onPress={() => setSession(null)} style={[styles.logoutBtn, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <Text style={[styles.logoutText, { color: colors.headerText }]}>Log Out</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Screen Body */}
       <View style={{ flex: 1 }}>{renderScreen()}</View>
 
       {/* Bottom Navigation */}
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
         <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('home')}>
-          <Home color={activeTab === 'home' ? '#FF6B8B' : '#A0AEC0'} size={20} />
-          <Text style={[styles.tabLabel, activeTab === 'home' && styles.activeTabLabel]}>Home</Text>
+          <Home color={activeTab === 'home' ? colors.primary : '#A0AEC0'} size={20} />
+          <Text style={[styles.tabLabel, { color: activeTab === 'home' ? colors.primary : '#A0AEC0' }]}>Home</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('chat')}>
-          <MessageCircle color={activeTab === 'chat' ? '#FF6B8B' : '#A0AEC0'} size={20} />
-          <Text style={[styles.tabLabel, activeTab === 'chat' && styles.activeTabLabel]}>Talk</Text>
+          <MessageCircle color={activeTab === 'chat' ? colors.primary : '#A0AEC0'} size={20} />
+          <Text style={[styles.tabLabel, { color: activeTab === 'chat' ? colors.primary : '#A0AEC0' }]}>Talk</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('sweetNotes')}>
-          <PenTool color={activeTab === 'sweetNotes' ? '#FF6B8B' : '#A0AEC0'} size={20} />
-          <Text style={[styles.tabLabel, activeTab === 'sweetNotes' && styles.activeTabLabel]}>Notes</Text>
+          <PenTool color={activeTab === 'sweetNotes' ? colors.primary : '#A0AEC0'} size={20} />
+          <Text style={[styles.tabLabel, { color: activeTab === 'sweetNotes' ? colors.primary : '#A0AEC0' }]}>Notes</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('gallery')}>
-          <ImageIcon color={activeTab === 'gallery' ? '#FF6B8B' : '#A0AEC0'} size={20} />
-          <Text style={[styles.tabLabel, activeTab === 'gallery' && styles.activeTabLabel]}>Gallery</Text>
+          <ImageIcon color={activeTab === 'gallery' ? colors.primary : '#A0AEC0'} size={20} />
+          <Text style={[styles.tabLabel, { color: activeTab === 'gallery' ? colors.primary : '#A0AEC0' }]}>Gallery</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('sos')}>
           <AlertCircle color={activeTab === 'sos' ? '#E53E3E' : '#A0AEC0'} size={20} />
-          <Text style={[styles.tabLabel, activeTab === 'sos' && { color: '#E53E3E', fontWeight: '700' }]}>SOS</Text>
+          <Text style={[styles.tabLabel, { color: activeTab === 'sos' ? '#E53E3E' : '#A0AEC0' }]}>SOS</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
+export default function App() {
+  return (
+    <ThemeProvider>
+      <MainApp />
+    </ThemeProvider>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF5F7' },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#FFD1DC',
-  },
-  appName: { fontSize: 18, fontWeight: '800', color: '#D81B60' },
-  coupleTag: { fontSize: 12, color: '#718096', fontWeight: '600', marginTop: 2 },
-  gearIconBtn: { backgroundColor: '#FFF5F7', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#FFD1DC' },
-  logoutBtn: { backgroundColor: '#FFF5F7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FFD1DC' },
-  logoutText: { fontSize: 12, color: '#D81B60', fontWeight: '700' },
-  tabBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#FFD1DC',
-  },
+  container: { flex: 1 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1 },
+  appName: { fontSize: 18, fontWeight: '800' },
+  coupleTag: { fontSize: 12, fontWeight: '600', marginTop: 2 },
+  gearIconBtn: { padding: 8, borderRadius: 8, borderWidth: 1 },
+  logoutBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
+  logoutText: { fontSize: 12, fontWeight: '700' },
+  tabBar: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 8, borderTopWidth: 1 },
   tabItem: { alignItems: 'center' },
-  tabLabel: { fontSize: 10, color: '#A0AEC0', marginTop: 2, fontWeight: '600' },
-  activeTabLabel: { color: '#FF6B8B', fontWeight: '700' }
+  tabLabel: { fontSize: 10, marginTop: 2, fontWeight: '600' },
 });
