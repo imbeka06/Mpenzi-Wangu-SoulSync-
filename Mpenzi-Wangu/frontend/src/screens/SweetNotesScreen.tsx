@@ -13,13 +13,14 @@ import {
   Send,
   Save,
   Music,
-  Tv,
   Heart,
   ChevronLeft,
   FileText,
   Clock,
-  Play,
   CheckCheck,
+  Inbox,
+  SendHorizontal,
+  MessageCircle,
 } from 'lucide-react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { WebView } from 'react-native-webview';
@@ -44,23 +45,22 @@ export default function SweetNotesScreen({
 }) {
   const { colors } = useTheme();
 
-  // Screen Tabs: 'inbox' (All Sent/Received) | 'create' | 'drafts'
-  const [activeTab, setActiveTab] = useState<'inbox' | 'create' | 'drafts'>('inbox');
+  // Navigation: 'received' | 'sent' | 'create' | 'drafts'
+  const [activeTab, setActiveTab] = useState<'received' | 'sent' | 'create' | 'drafts'>('received');
 
   // Currently Selected Note to Read
   const [selectedNote, setSelectedNote] = useState<any | null>(null);
 
-  // Form States for Creating / Editing Note
+  // Form States for Composing / Editing Note
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [musicUrl, setMusicUrl] = useState('');
-  const [musicType, setMusicType] = useState<'youtube' | 'spotify'>('youtube');
 
-  // Live Notes from Firestore
+  // Live Notes Array from Firestore
   const [notes, setNotes] = useState<any[]>([]);
 
-  // Real-time Firestore Listener for Sweet Notes
+  // Real-time Firestore Listener
   useEffect(() => {
     if (!coupleId) return;
 
@@ -78,7 +78,7 @@ export default function SweetNotesScreen({
     return () => unsubscribe();
   }, [coupleId]);
 
-  // Extract YouTube Video ID
+  // Extract YouTube ID
   const getYouTubeId = (url: string) => {
     if (!url) return 'mFBJtuQ1Llc';
     let id = url.trim();
@@ -95,10 +95,10 @@ export default function SweetNotesScreen({
     return id;
   };
 
-  // Save Note as Draft or Send directly to Mpenzi
+  // Save or Send Note
   const handleSaveNote = async (isDraft: boolean) => {
     if (!noteTitle.trim() || !noteContent.trim()) {
-      Alert.alert('Missing Fields', 'Please enter both a title and message for your note.');
+      Alert.alert('Missing Info', 'Please provide a title and message.');
       return;
     }
 
@@ -116,28 +116,29 @@ export default function SweetNotesScreen({
 
     try {
       if (editingDraftId) {
-        // Update existing draft
         await updateDoc(doc(db, 'couples', coupleId, 'sweetNotes', editingDraftId), noteData);
-        Alert.alert('Updated! 💕', isDraft ? 'Draft updated successfully.' : 'Sweet Note delivered to your Mpenzi!');
       } else {
-        // Save new note
         await addDoc(collection(db, 'couples', coupleId, 'sweetNotes'), noteData);
-        Alert.alert(isDraft ? 'Draft Saved 📂' : 'Sent with Love! 💌', isDraft ? 'Saved in your Drafts tab.' : 'Delivered straight to your Mpenzi!');
       }
 
-      // Reset Form Fields
+      Alert.alert(
+        isDraft ? 'Draft Saved 📂' : 'Delivered! 💌',
+        isDraft ? 'Saved in your Drafts tab.' : 'Sent straight to your partner’s Received Notes!'
+      );
+
       setNoteTitle('');
       setNoteContent('');
       setMusicUrl('');
       setEditingDraftId(null);
-      setActiveTab(isDraft ? 'drafts' : 'inbox');
+      setActiveTab(isDraft ? 'drafts' : 'sent');
     } catch (e: any) {
       Alert.alert('Error', e.message);
     }
   };
 
-  // Filter Notes by Category
-  const deliveredNotes = notes.filter((n) => n.status === 'sent');
+  // Filter Notes by Receiver vs Sender Perspective
+  const receivedNotes = notes.filter((n) => n.status === 'sent' && n.authorId !== userId);
+  const sentNotes = notes.filter((n) => n.status === 'sent' && n.authorId === userId);
   const draftNotes = notes.filter((n) => n.status === 'draft' && n.authorId === userId);
 
   return (
@@ -150,20 +151,35 @@ export default function SweetNotesScreen({
         <PenTool color="#E67E22" size={32} />
         <Text style={[styles.title, { color: colors.headerText }]}>Sweet Notes & Music 📜</Text>
         <Text style={[styles.subtitle, { color: colors.subText }]}>
-          Write love letters with background soundtrack streams
+          Private love letters with streaming soundtracks
         </Text>
 
-        {/* Tab Selector */}
+        {/* Tailored Tab Navigation */}
         <View style={styles.tabBarRow}>
           <TouchableOpacity
-            style={[styles.tabItem, activeTab === 'inbox' && { backgroundColor: colors.primary }]}
+            style={[styles.tabItem, activeTab === 'received' && { backgroundColor: colors.primary }]}
             onPress={() => {
               setSelectedNote(null);
-              setActiveTab('inbox');
+              setActiveTab('received');
             }}
           >
-            <Heart color={activeTab === 'inbox' ? '#FFF' : colors.inputText} size={16} />
-            <Text style={[styles.tabText, { color: activeTab === 'inbox' ? '#FFF' : colors.inputText }]}>Notes 💕</Text>
+            <Inbox color={activeTab === 'received' ? '#FFF' : colors.inputText} size={15} />
+            <Text style={[styles.tabText, { color: activeTab === 'received' ? '#FFF' : colors.inputText }]}>
+              Received ({receivedNotes.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'sent' && { backgroundColor: colors.primary }]}
+            onPress={() => {
+              setSelectedNote(null);
+              setActiveTab('sent');
+            }}
+          >
+            <SendHorizontal color={activeTab === 'sent' ? '#FFF' : colors.inputText} size={15} />
+            <Text style={[styles.tabText, { color: activeTab === 'sent' ? '#FFF' : colors.inputText }]}>
+              Sent ({sentNotes.length})
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -174,8 +190,10 @@ export default function SweetNotesScreen({
               setActiveTab('create');
             }}
           >
-            <PenTool color={activeTab === 'create' ? '#FFF' : colors.inputText} size={16} />
-            <Text style={[styles.tabText, { color: activeTab === 'create' ? '#FFF' : colors.inputText }]}>Write ✍️</Text>
+            <PenTool color={activeTab === 'create' ? '#FFF' : colors.inputText} size={15} />
+            <Text style={[styles.tabText, { color: activeTab === 'create' ? '#FFF' : colors.inputText }]}>
+              Write ✍️
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -185,13 +203,15 @@ export default function SweetNotesScreen({
               setActiveTab('drafts');
             }}
           >
-            <Clock color={activeTab === 'drafts' ? '#FFF' : colors.inputText} size={16} />
-            <Text style={[styles.tabText, { color: activeTab === 'drafts' ? '#FFF' : colors.inputText }]}>Drafts 📂</Text>
+            <Clock color={activeTab === 'drafts' ? '#FFF' : colors.inputText} size={15} />
+            <Text style={[styles.tabText, { color: activeTab === 'drafts' ? '#FFF' : colors.inputText }]}>
+              Drafts ({draftNotes.length})
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* VIEW 1: READ DETAILED NOTE */}
+      {/* DETAILED READER VIEW (RECEIVER VS SENDER PERSPECTIVES) */}
       {selectedNote ? (
         <View style={[styles.readerCard, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
           <TouchableOpacity
@@ -199,15 +219,23 @@ export default function SweetNotesScreen({
             onPress={() => setSelectedNote(null)}
           >
             <ChevronLeft color={colors.primary} size={18} />
-            <Text style={[styles.backText, { color: colors.primary }]}>Back to List</Text>
+            <Text style={[styles.backText, { color: colors.primary }]}>Back to Notes</Text>
           </TouchableOpacity>
+
+          {/* Dynamic Reader Title Tag */}
+          <View style={styles.readerHeaderTag}>
+            <Text style={[styles.perspectiveBadge, { color: colors.primary }]}>
+              {selectedNote.authorId === userId ? '📤 NOTE YOU SENT' : '💌 RECEIVED FROM MPENZI'}
+            </Text>
+          </View>
 
           <Text style={[styles.readerTitle, { color: colors.headerText }]}>{selectedNote.title}</Text>
           <Text style={[styles.readerDate, { color: colors.subText }]}>
-            Sent on {new Date(selectedNote.createdAt).toLocaleDateString()}
+            {new Date(selectedNote.createdAt).toLocaleDateString()} at{' '}
+            {new Date(selectedNote.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </Text>
 
-          {/* Embedded Background Soundtrack Player */}
+          {/* Embedded Soundtrack Frame */}
           {selectedNote.musicUrl && (
             <View style={styles.soundtrackBox}>
               <Text style={[styles.soundtrackTag, { color: colors.primary }]}>
@@ -232,21 +260,36 @@ export default function SweetNotesScreen({
           )}
 
           <Text style={[styles.readerContent, { color: colors.inputText }]}>{selectedNote.content}</Text>
+
+          {/* RECEIVER ONLY: Reply Button */}
+          {selectedNote.authorId !== userId && (
+            <TouchableOpacity
+              style={[styles.replyBtn, { backgroundColor: colors.primary }]}
+              onPress={() => {
+                setNoteTitle(`Re: ${selectedNote.title}`);
+                setSelectedNote(null);
+                setActiveTab('create');
+              }}
+            >
+              <MessageCircle color="#FFF" size={18} />
+              <Text style={styles.replyBtnText}>Reply to Note ✍️</Text>
+            </TouchableOpacity>
+          )}
         </View>
       ) : (
         <>
-          {/* VIEW 2: DELIVERED NOTES LIST */}
-          {activeTab === 'inbox' && (
+          {/* VIEW 1: RECEIVED NOTES (PERSPECTIVE FOR RECEIVER) */}
+          {activeTab === 'received' && (
             <View style={{ gap: 12 }}>
-              {deliveredNotes.length === 0 ? (
+              {receivedNotes.length === 0 ? (
                 <View style={[styles.emptyBox, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-                  <FileText color={colors.subText} size={36} />
+                  <Inbox color={colors.subText} size={36} />
                   <Text style={[styles.emptyText, { color: colors.subText }]}>
-                    No Sweet Notes yet. Write your first love letter to Mpenzi!
+                    No received notes yet. Your Mpenzi's letters will appear here!
                   </Text>
                 </View>
               ) : (
-                deliveredNotes.map((note) => (
+                receivedNotes.map((note) => (
                   <TouchableOpacity
                     key={note.id}
                     style={[styles.noteCard, { backgroundColor: colors.cardBg, borderColor: colors.border }]}
@@ -254,9 +297,9 @@ export default function SweetNotesScreen({
                   >
                     <View style={styles.noteCardHeader}>
                       <Text style={[styles.noteCardTitle, { color: colors.inputText }]}>{note.title}</Text>
-                      <View style={styles.sentBadge}>
-                        <CheckCheck color="#27AE60" size={14} />
-                        <Text style={styles.sentBadgeText}>Delivered 💕</Text>
+                      <View style={[styles.sentBadge, { backgroundColor: '#E53E3E20' }]}>
+                        <Heart color="#E53E3E" size={12} fill="#E53E3E" />
+                        <Text style={[styles.sentBadgeText, { color: '#E53E3E' }]}>From Mpenzi 💕</Text>
                       </View>
                     </View>
                     <Text numberOfLines={2} style={[styles.noteCardPreview, { color: colors.subText }]}>
@@ -274,7 +317,40 @@ export default function SweetNotesScreen({
             </View>
           )}
 
-          {/* VIEW 3: WRITE / COMPOSE NOTE */}
+          {/* VIEW 2: SENT NOTES (PERSPECTIVE FOR SENDER) */}
+          {activeTab === 'sent' && (
+            <View style={{ gap: 12 }}>
+              {sentNotes.length === 0 ? (
+                <View style={[styles.emptyBox, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+                  <SendHorizontal color={colors.subText} size={36} />
+                  <Text style={[styles.emptyText, { color: colors.subText }]}>
+                    You haven't sent any notes yet. Write your first love letter!
+                  </Text>
+                </View>
+              ) : (
+                sentNotes.map((note) => (
+                  <TouchableOpacity
+                    key={note.id}
+                    style={[styles.noteCard, { backgroundColor: colors.cardBg, borderColor: colors.border }]}
+                    onPress={() => setSelectedNote(note)}
+                  >
+                    <View style={styles.noteCardHeader}>
+                      <Text style={[styles.noteCardTitle, { color: colors.inputText }]}>{note.title}</Text>
+                      <View style={styles.sentBadge}>
+                        <CheckCheck color="#27AE60" size={14} />
+                        <Text style={styles.sentBadgeText}>Delivered 📬</Text>
+                      </View>
+                    </View>
+                    <Text numberOfLines={2} style={[styles.noteCardPreview, { color: colors.subText }]}>
+                      {note.content}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          )}
+
+          {/* VIEW 3: WRITE NOTE */}
           {activeTab === 'create' && (
             <View style={[styles.composeCard, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
               <Text style={[styles.formHeader, { color: colors.headerText }]}>
@@ -302,10 +378,9 @@ export default function SweetNotesScreen({
                 onChangeText={setNoteContent}
               />
 
-              {/* Music Link Attachment Field */}
               <View style={{ width: '100%', gap: 6 }}>
                 <Text style={[styles.fieldLabel, { color: colors.inputText }]}>
-                  Attach YouTube or Spotify Link (e.g., Billie Eilish - Wildflower)
+                  Attach YouTube or Spotify Soundtrack Link
                 </Text>
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.inputText }]}
@@ -316,7 +391,6 @@ export default function SweetNotesScreen({
                 />
               </View>
 
-              {/* Action Buttons */}
               <View style={styles.actionBtnRow}>
                 <TouchableOpacity
                   style={[styles.draftBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
@@ -337,7 +411,7 @@ export default function SweetNotesScreen({
             </View>
           )}
 
-          {/* VIEW 4: SAVED DRAFTS TAB */}
+          {/* VIEW 4: DRAFTS TAB */}
           {activeTab === 'drafts' && (
             <View style={{ gap: 12 }}>
               {draftNotes.length === 0 ? (
@@ -386,17 +460,17 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '800', marginTop: 10 },
   subtitle: { fontSize: 12, marginTop: 2, marginBottom: 15 },
 
-  tabBarRow: { flexDirection: 'row', gap: 8, width: '100%' },
+  tabBarRow: { flexDirection: 'row', gap: 6, width: '100%' },
   tabItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    borderRadius: 16,
-    gap: 6,
+    borderRadius: 14,
+    gap: 4,
   },
-  tabText: { fontWeight: '800', fontSize: 12 },
+  tabText: { fontWeight: '800', fontSize: 10 },
 
   readerCard: { padding: 20, borderRadius: 24, borderWidth: 1 },
   backBtn: {
@@ -407,15 +481,20 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     gap: 4,
-    marginBottom: 15,
+    marginBottom: 12,
   },
   backText: { fontSize: 11, fontWeight: '700' },
+  readerHeaderTag: { marginBottom: 6 },
+  perspectiveBadge: { fontSize: 11, fontWeight: '800', letterSpacing: 1 },
   readerTitle: { fontSize: 20, fontWeight: '800' },
   readerDate: { fontSize: 11, marginTop: 4, marginBottom: 15 },
 
   soundtrackBox: { width: '100%', marginBottom: 15, borderRadius: 16, overflow: 'hidden' },
   soundtrackTag: { fontSize: 10, fontWeight: '800', letterSpacing: 1, marginBottom: 8 },
   readerContent: { fontSize: 15, lineHeight: 24, marginTop: 10 },
+
+  replyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 18, gap: 8, marginTop: 20 },
+  replyBtnText: { color: '#FFF', fontWeight: '800', fontSize: 13 },
 
   emptyBox: { padding: 30, borderRadius: 24, borderWidth: 1, alignItems: 'center', gap: 10 },
   emptyText: { fontSize: 13, textAlign: 'center' },
