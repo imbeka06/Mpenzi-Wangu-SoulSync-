@@ -27,10 +27,10 @@ import { useTheme } from '../context/ThemeContext';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function HomeScreen({
-  coupleId,
+  coupleId = 'couple_demo_123',
   onNavigate,
 }: {
-  coupleId: string;
+  coupleId?: string;
   onNavigate: (screen: string) => void;
 }) {
   const { colors } = useTheme();
@@ -283,7 +283,6 @@ const styles = StyleSheet.create({
   subWelcomeText: { fontSize: 12 },
   settingsGearBtn: { padding: 10, borderRadius: 20, borderWidth: 1 },
 
-  // Ticker Banner Styling
   tickerBannerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -308,7 +307,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 13,
-    whiteSpace: 'nowrap',
   },
 
   banner: {

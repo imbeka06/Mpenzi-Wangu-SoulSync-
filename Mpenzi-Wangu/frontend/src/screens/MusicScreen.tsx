@@ -14,7 +14,6 @@ import {
   Play,
   Pause,
   Heart,
-  Plus,
   Send,
   Radio,
   Star,
@@ -26,7 +25,7 @@ import { db } from '../lib/firebase';
 import { useTheme } from '../context/ThemeContext';
 
 export default function MusicScreen({
-  coupleId,
+  coupleId = 'couple_demo_123',
   userId,
 }: {
   coupleId?: string;
@@ -263,7 +262,7 @@ export default function MusicScreen({
               height={200}
               play={isPlaying}
               videoId={youtubeVideoId}
-              onChangeState={(state) => {
+              onChangeState={(state: string) => {
                 if (state === 'ended') setIsPlaying(false);
               }}
             />
