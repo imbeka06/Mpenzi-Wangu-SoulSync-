@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Home, MessageCircle, Calendar, Music, AlertCircle, PenTool, Image as ImageIcon } from 'lucide-react-native';
+import { Home, MessageCircle, Calendar, Music, AlertCircle, PenTool, Image as ImageIcon, Settings } from 'lucide-react-native';
 
 import AuthScreen from './src/screens/AuthScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -11,10 +11,11 @@ import MusicScreen from './src/screens/MusicScreen';
 import SosScreen from './src/screens/SosScreen';
 import SweetNotesScreen from './src/screens/SweetNotesScreen';
 import GalleryScreen from './src/screens/GalleryScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 export default function App() {
   const [session, setSession] = useState<{ userId: string; coupleId: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'chat' | 'cycle' | 'sweetNotes' | 'gallery' | 'music' | 'sos'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'chat' | 'cycle' | 'sweetNotes' | 'gallery' | 'music' | 'sos' | 'settings'>('home');
 
   if (!session) {
     return <AuthScreen onLoginSuccess={(userId, coupleId) => setSession({ userId, coupleId })} />;
@@ -36,6 +37,8 @@ export default function App() {
         return <MusicScreen />;
       case 'sos':
         return <SosScreen coupleId={session.coupleId} />;
+      case 'settings':
+        return <SettingsScreen userId={session.userId} coupleId={session.coupleId} />;
       default:
         return <HomeScreen onNavigate={(screen: any) => setActiveTab(screen)} />;
     }
@@ -51,9 +54,14 @@ export default function App() {
           <Text style={styles.appName}>Mpenzi-Wangu 💕</Text>
           <Text style={styles.coupleTag}>Space: {session.coupleId}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setSession(null)} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setActiveTab('settings')} style={styles.gearIconBtn}>
+            <Settings color="#D81B60" size={18} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setSession(null)} style={styles.logoutBtn}>
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Screen Body */}
@@ -104,6 +112,7 @@ const styles = StyleSheet.create({
   },
   appName: { fontSize: 18, fontWeight: '800', color: '#D81B60' },
   coupleTag: { fontSize: 12, color: '#718096', fontWeight: '600', marginTop: 2 },
+  gearIconBtn: { backgroundColor: '#FFF5F7', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#FFD1DC' },
   logoutBtn: { backgroundColor: '#FFF5F7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FFD1DC' },
   logoutText: { fontSize: 12, color: '#D81B60', fontWeight: '700' },
   tabBar: {
