@@ -1,10 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Heart, Calendar, MessageCircle, AlertCircle, Music, PenTool, Image as ImageIcon } from 'lucide-react-native';
+import { Heart, Calendar, MessageCircle, AlertCircle, Music, PenTool, Image as ImageIcon, Settings } from 'lucide-react-native';
 
 export default function HomeScreen({ onNavigate }: { onNavigate: (screen: string) => void }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Top Welcome Header with Settings Gear Button */}
+      <View style={styles.topHeader}>
+        <View>
+          <Text style={styles.welcomeText}>Welcome Home 💕</Text>
+          <Text style={styles.subWelcomeText}>Mpenzi-Wangu Couple Space</Text>
+        </View>
+        <TouchableOpacity style={styles.settingsGearBtn} onPress={() => onNavigate('settings')}>
+          <Settings color="#D81B60" size={22} />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.banner}>
         <Heart color="#FF6B8B" size={40} fill="#FF6B8B" />
         <Text style={styles.bannerTitle}>Connected in Love 💕</Text>
@@ -66,6 +77,10 @@ export default function HomeScreen({ onNavigate }: { onNavigate: (screen: string
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF5F7' },
   content: { padding: 20 },
+  topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  welcomeText: { fontSize: 20, fontWeight: '800', color: '#D81B60' },
+  subWelcomeText: { fontSize: 12, color: '#718096' },
+  settingsGearBtn: { backgroundColor: '#FFF', padding: 10, borderRadius: 20, borderWidth: 1, borderColor: '#FFD1DC' },
   banner: { backgroundColor: '#FFFFFF', padding: 24, borderRadius: 24, alignItems: 'center', marginBottom: 25, borderColor: '#FFD1DC', borderWidth: 1 },
   bannerTitle: { fontSize: 22, fontWeight: '800', color: '#D81B60', marginTop: 10 },
   bannerSubtitle: { fontSize: 13, color: '#718096', marginTop: 4 },
