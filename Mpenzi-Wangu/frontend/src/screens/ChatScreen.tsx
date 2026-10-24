@@ -8,28 +8,50 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
 } from 'react-native';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { Send, Phone, Video, Smile } from 'lucide-react-native';
 import { db } from '../lib/firebase';
 import { useTheme } from '../context/ThemeContext';
+import CallOverlay from '../components/CallOverlay';
 
 const EMOJI_CATEGORIES = {
   Love: ['💕', '💖', '🥰', '❤️', '💌', '🌹', '💋', '💍'],
   Ewe: ['🐑', '🐐', '🧸', '🌾', '🐾', '🌸'],
   Moon: ['🌙', '🌕', '🌒', '✨', '⭐', '🌌'],
-  Flags: ['🇰🇪', '🇹🇿', '🇺🇬', '🇷🇼', '🇿🇦', '🇬🇧', '🇺🇸'],
+  Flags: ['🇰🇪', '🇹ℤ', '🇺🇬', '🇷🇼', '🇿🇦', '🇬🇧', '🇺🇸'],
 };
 
-export default function ChatScreen({ coupleId, userId }: { coupleId: string; userId: string }) {
+export default function ChatScreen({
+  coupleId,
+  userId,
+}: {
+  coupleId: string;
+  userId: string;
+}) {
   const { colors } = useTheme();
+
+  // Chat State
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
   const [showEmojis, setShowEmojis] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<'Love' | 'Ewe' | 'Moon' | 'Flags'>('Love');
+  const [activeCategory, setActiveCategory] = useState<
+    'Love' | 'Ewe' | 'Moon' | 'Flags'
+  >('Love');
 
+  // Call Overlay State
+  const [isCallOpen, setIsCallOpen] = useState(false);
+  const [activeCallType, setActiveCallType] = useState<'Voice' | 'Video'>('Voice');
+
+  // Listen to Firestore Real-Time Chat Messages
   useEffect(() => {
     const messagesRef = collection(db, 'couples', coupleId, 'messages');
     const q = query(messagesRef, orderBy('createdAt', 'desc'));
@@ -45,20 +67,27 @@ export default function ChatScreen({ coupleId, userId }: { coupleId: string; use
     return () => unsubscribe();
   }, [coupleId]);
 
+  // Send Message Handler
   const sendMessage = async () => {
     if (!inputText.trim()) return;
     const messageText = inputText;
     setInputText('');
 
-    await addDoc(collection(db, 'couples', coupleId, 'messages'), {
-      text: messageText,
-      senderId: userId,
-      createdAt: serverTimestamp(),
-    });
+    try {
+      await addDoc(collection(db, 'couples', coupleId, 'messages'), {
+        text: messageText,
+        senderId: userId,
+        createdAt: serverTimestamp(),
+      });
+    } catch (e) {
+      console.log('Error sending message:', e);
+    }
   };
 
-  const handleCall = (type: 'Voice' | 'Video') => {
-    Alert.alert(`Starting ${type} Call 📞`, `Calling your Mpenzi via secure connection...`);
+  // Launch Voice or Video Call Overlay
+  const handleStartCall = (type: 'Voice' | 'Video') => {
+    setActiveCallType(type);
+    setIsCallOpen(true);
   };
 
   return (
@@ -67,25 +96,45 @@ export default function ChatScreen({ coupleId, userId }: { coupleId: string; use
       style={[styles.container, { backgroundColor: colors.background }]}
       keyboardVerticalOffset={90}
     >
-      {/* Top Header Action Bar */}
-      <View style={[styles.topCallBar, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-        <Text style={[styles.callHeaderTitle, { color: colors.headerText }]}>Talk with Mpenzi</Text>
+      {/* Top Header Bar with Call Triggers */}
+      <View
+        style={[
+          styles.topCallBar,
+          { backgroundColor: colors.cardBg, borderColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.callHeaderTitle, { color: colors.headerText }]}>
+          Talk with Mpenzi 💕
+        </Text>
         <View style={styles.callIconGroup}>
-          <TouchableOpacity style={[styles.callButton, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={() => handleCall('Voice')}>
+          <TouchableOpacity
+            style={[
+              styles.callButton,
+              { backgroundColor: colors.background, borderColor: colors.border },
+            ]}
+            onPress={() => handleStartCall('Voice')}
+          >
             <Phone color={colors.primary} size={18} />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.callButton, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={() => handleCall('Video')}>
+
+          <TouchableOpacity
+            style={[
+              styles.callButton,
+              { backgroundColor: colors.background, borderColor: colors.border },
+            ]}
+            onPress={() => handleStartCall('Video')}
+          >
             <Video color={colors.primary} size={18} />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Messages List */}
+      {/* Messages Feed */}
       <FlatList
         inverted
         data={messages}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 15 }}
+        contentContainerStyle={styles.messagesList}
         renderItem={({ item }) => {
           const isMe = item.senderId === userId;
           return (
@@ -93,80 +142,196 @@ export default function ChatScreen({ coupleId, userId }: { coupleId: string; use
               style={[
                 styles.bubble,
                 isMe
-                  ? { backgroundColor: colors.primary, alignSelf: 'flex-end', borderBottomRightRadius: 2 }
-                  : { backgroundColor: colors.cardBg, borderColor: colors.border, alignSelf: 'flex-start', borderBottomLeftRadius: 2, borderWidth: 1 },
+                  ? {
+                      backgroundColor: colors.primary,
+                      alignSelf: 'flex-end',
+                      borderBottomRightRadius: 2,
+                    }
+                  : {
+                      backgroundColor: colors.cardBg,
+                      borderColor: colors.border,
+                      alignSelf: 'flex-start',
+                      borderBottomLeftRadius: 2,
+                      borderWidth: 1,
+                    },
               ]}
             >
-              <Text style={{ color: isMe ? '#FFFFFF' : colors.inputText, fontSize: 15 }}>{item.text}</Text>
+              <Text
+                style={{
+                  color: isMe ? '#FFFFFF' : colors.inputText,
+                  fontSize: 15,
+                  fontWeight: '500',
+                }}
+              >
+                {item.text}
+              </Text>
             </View>
           );
         }}
       />
 
-      {/* Emoji Picker */}
+      {/* Emoji Keyboard Picker Drawer */}
       {showEmojis && (
-        <View style={[styles.emojiPickerContainer, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.emojiPickerContainer,
+            { backgroundColor: colors.cardBg, borderColor: colors.border },
+          ]}
+        >
+          {/* Category Selector Tabs */}
           <View style={[styles.categoryHeader, { borderColor: colors.border }]}>
-            {(Object.keys(EMOJI_CATEGORIES) as Array<keyof typeof EMOJI_CATEGORIES>).map((cat) => (
+            {(
+              Object.keys(EMOJI_CATEGORIES) as Array<
+                keyof typeof EMOJI_CATEGORIES
+              >
+            ).map((cat) => (
               <TouchableOpacity
                 key={cat}
-                style={[styles.categoryTab, activeCategory === cat && { backgroundColor: colors.primary }]}
+                style={[
+                  styles.categoryTab,
+                  activeCategory === cat && { backgroundColor: colors.primary },
+                ]}
                 onPress={() => setActiveCategory(cat)}
               >
-                <Text style={{ fontSize: 12, fontWeight: '600', color: activeCategory === cat ? '#FFF' : colors.subText }}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '700',
+                    color:
+                      activeCategory === cat ? '#FFFFFF' : colors.subText,
+                  }}
+                >
                   {cat}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.emojiGrid}>
+
+          {/* Emoji Grid */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.emojiGrid}
+          >
             {EMOJI_CATEGORIES[activeCategory].map((emoji, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.emojiItem}
                 onPress={() => setInputText((prev) => prev + emoji)}
               >
-                <Text style={{ fontSize: 24 }}>{emoji}</Text>
+                <Text style={styles.emojiText}>{emoji}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
       )}
 
-      {/* Message Input Bar */}
-      <View style={[styles.inputBar, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-        <TouchableOpacity style={styles.emojiToggle} onPress={() => setShowEmojis(!showEmojis)}>
+      {/* Bottom Message Input Bar */}
+      <View
+        style={[
+          styles.inputBar,
+          { backgroundColor: colors.cardBg, borderColor: colors.border },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.emojiToggle}
+          onPress={() => setShowEmojis(!showEmojis)}
+        >
           <Smile color={colors.primary} size={22} />
         </TouchableOpacity>
+
         <TextInput
-          style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.inputText }]}
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+              color: colors.inputText,
+            },
+          ]}
           placeholder="Send a sweet message..."
           placeholderTextColor="#A0AEC0"
           value={inputText}
           onChangeText={setInputText}
         />
-        <TouchableOpacity style={[styles.sendButton, { backgroundColor: colors.primary }]} onPress={sendMessage}>
-          <Send color="#FFF" size={18} />
+
+        <TouchableOpacity
+          style={[styles.sendButton, { backgroundColor: colors.primary }]}
+          onPress={sendMessage}
+        >
+          <Send color="#FFFFFF" size={18} />
         </TouchableOpacity>
       </View>
+
+      {/* Functional Voice / Video Call Overlay Modal */}
+      <CallOverlay
+        coupleId={coupleId}
+        userId={userId}
+        isOpen={isCallOpen}
+        callType={activeCallType}
+        onClose={() => setIsCallOpen(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  topCallBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
-  callHeaderTitle: { fontSize: 14, fontWeight: '700' },
+  topCallBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  callHeaderTitle: { fontSize: 16, fontWeight: '800' },
   callIconGroup: { flexDirection: 'row', gap: 10 },
-  callButton: { padding: 8, borderRadius: 20, borderWidth: 1 },
-  bubble: { padding: 12, borderRadius: 18, marginVertical: 4, maxWidth: '80%' },
-  inputBar: { flexDirection: 'row', alignItems: 'center', padding: 10, borderTopWidth: 1, gap: 10 },
+  callButton: {
+    padding: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  messagesList: { padding: 15 },
+  bubble: {
+    padding: 12,
+    borderRadius: 18,
+    marginVertical: 4,
+    maxWidth: '80%',
+  },
+  inputBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderTopWidth: 1,
+    gap: 10,
+  },
   emojiToggle: { padding: 5 },
-  input: { flex: 1, borderRadius: 25, paddingHorizontal: 18, paddingVertical: 10, fontSize: 15, borderWidth: 1 },
+  input: {
+    flex: 1,
+    borderRadius: 25,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    fontSize: 15,
+    borderWidth: 1,
+  },
   sendButton: { padding: 12, borderRadius: 25 },
-  emojiPickerContainer: { borderTopWidth: 1, paddingVertical: 8 },
-  categoryHeader: { flexDirection: 'row', justifyContent: 'space-around', borderBottomWidth: 1, paddingBottom: 6 },
-  categoryTab: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  emojiPickerContainer: {
+    borderTopWidth: 1,
+    paddingVertical: 8,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    borderBottomWidth: 1,
+    paddingBottom: 6,
+  },
+  categoryTab: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
   emojiGrid: { paddingHorizontal: 15, paddingVertical: 10, gap: 12 },
   emojiItem: { padding: 6 },
+  emojiText: { fontSize: 24 },
 });
